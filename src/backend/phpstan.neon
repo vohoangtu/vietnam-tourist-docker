@@ -1,0 +1,13 @@
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - tests
+    level: 8
+    reportUnmatchedIgnoredErrors: false
+    excludePaths:
+        - ./app/Console/Kernel.php
+    tmpDir: build/phpstan
+    checkModelProperties: true
