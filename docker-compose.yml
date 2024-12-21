@@ -1,37 +1,79 @@
-version: '3.8'
-
+version: '3'
 services:
-  # Backend service
   backend:
-    build:
+    build: 
       context: ./src/backend
       dockerfile: Dockerfile
-    container_name: laravel_app
-    restart: unless-stopped
     volumes:
-      - ./src/backend:/var/www/html
-    networks:
-      - app-network
+      - ./src/backend:/var/www/html:delegated
+      - ./src/backend/storage:/var/www/html/storage:delegated
+      - ./src/backend/bootstrap/cache:/var/www/html/bootstrap/cache:delegated
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=${POSTGRES_DB}
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - CACHE_DRIVER=file
+      - SESSION_DRIVER=file
+      - QUEUE_DRIVER=sync
     depends_on:
       - db
+    networks:
+      - app-network
+    restart: unless-stopped
 
-  # Frontend service  
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - app-network
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./src/frontend
       dockerfile: Dockerfile
-    container_name: nextjs_app
-    restart: unless-stopped
+    ports:
+      - "3000:3000"
     volumes:
       - ./src/frontend:/app
       - /app/node_modules
       - /app/.next
-    ports:
-      - "3000:3000"
+    environment:
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
     networks:
       - app-network
+    restart: unless-stopped
 
-  # Nginx service
   nginx:
     image: nginx:alpine
     container_name: nginx
@@ -46,26 +88,10 @@ services:
     depends_on:
       - backend
 
-  # Database service
-  db:
-    image: mysql:8.0
-    container_name: mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_PASSWORD: secret
-      MYSQL_USER: laravel
-    volumes:
-      - dbdata:/var/lib/mysql
-    networks:
-      - app-network
-    ports:
-      - "3306:3306"
-
 networks:
   app-network:
     driver: bridge
 
 volumes:
-  dbdata:
+  postgres_data:
+    driver: local

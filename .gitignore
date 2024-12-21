@@ -1,25 +1,6 @@
-# Backend
-/src/backend/vendor
-/src/backend/node_modules
-/src/backend/.env
-/src/backend/.env.backup
-/src/backend/.phpunit.result.cache
-/src/backend/Homestead.json
-/src/backend/Homestead.yaml
-/src/backend/npm-debug.log
-/src/backend/yarn-error.log
-
-# Frontend
-/src/frontend/node_modules
-/src/frontend/.next
-/src/frontend/.env
-/src/frontend/.env.local
-/src/frontend/.env.development.local
-/src/frontend/.env.test.local
-/src/frontend/.env.production.local
-/src/frontend/npm-debug.log*
-/src/frontend/yarn-debug.log*
-/src/frontend/yarn-error.log*
-
-# Docker
-/docker/mysql/data/
+.env
+postgres_data/
+*/node_modules
+*/.next
+*/vendor
+*/storage/*.key

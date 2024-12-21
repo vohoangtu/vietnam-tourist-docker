@@ -1,6 +1,0 @@
-[submodule "src/backend"]
-    path = src/backend
-    url = git@github.com:your-username/vietnamtourist-backend.git
-[submodule "src/frontend"]
-    path = src/frontend
-    url = git@github.com:your-username/vietnamtourist-frontend.git

@@ -1,73 +1,170 @@
-# Vietnamtourist Project
+# Docker Development Environment
 
-This repository contains Docker configuration for the Vietnamtourist project, which consists of a Laravel backend and Next.js frontend.
+This repository contains a Docker-based development environment for a Laravel backend and Next.js frontend application with PostgreSQL database.
 
-## Repository Structure
+## Prerequisites
 
-The project is split into three repositories:
-- [vietnamtourist-docker](https://github.com/your-username/vietnamtourist-docker) (this repo) - Docker configuration
-- [vietnamtourist-backend](https://github.com/your-username/vietnamtourist-backend) - Laravel backend
-- [vietnamtourist-frontend](https://github.com/your-username/vietnamtourist-frontend) - Next.js frontend
+- Docker Engine 24.x or later
+- Docker Compose v2.x or later
+- Git
 
-## Getting Started
+## Project Structure
 
-1. Clone this repository with submodules:
-```bash
-git clone --recursive https://github.com/your-username/vietnamtourist-docker.git
-cd vietnamtourist-docker
+```
+docker-apps/
+├── backend/               # Laravel application
+│   ├── public/           # Laravel public files
+│   ├── storage/          # Laravel storage
+│   └── docker/          # Docker configuration files
+├── frontend/             # Next.js application
+├── docker-compose.yml    # Docker services configuration
+└── .env.docker          # Docker environment variables
 ```
 
-2. If you've already cloned the project without submodules:
+## Quick Start
+
+1. Clone the repository:
 ```bash
-git submodule init
-git submodule update
+git clone <repository-url>
+cd docker-apps
 ```
 
-3. Copy environment files:
+2. Copy the environment file:
 ```bash
-cp src/backend/.env.example src/backend/.env
-cp src/frontend/.env.example src/frontend/.env
+cp .env.docker .env
 ```
 
-4. Start the Docker containers:
+3. Generate Laravel application key:
 ```bash
-docker-compose up -d
+docker-compose run --rm backend php artisan key:generate --show
+```
+Update the generated key in `.env` file.
+
+4. Build and start the containers:
+```bash
+docker-compose up --build -d
 ```
 
-## Development
+5. Install Laravel dependencies:
+```bash
+docker-compose exec backend composer install
+```
+
+6. Run Laravel migrations:
+```bash
+docker-compose exec backend php artisan migrate
+```
+
+## Accessing Services
+
+- Laravel Backend: http://localhost:8000
+- Next.js Frontend: http://localhost:3000
+- PostgreSQL Database:
+  - Host: localhost
+  - Port: 5432
+  - Default credentials in `.env.docker`
+- pgAdmin: http://localhost:5050
+  - Default login: admin@admin.com / admin
+
+## Development Workflow
 
 ### Backend (Laravel)
-- Source code is in `src/backend`
-- API runs on http://localhost:80
-- To run commands in the Laravel container:
+
+- Laravel files are mounted at `/var/www/html` in the container
+- Run artisan commands:
 ```bash
-docker exec -it laravel_app bash
+docker-compose exec backend php artisan <command>
+```
+- Access Laravel logs:
+```bash
+docker-compose exec backend tail -f storage/logs/laravel.log
 ```
 
 ### Frontend (Next.js)
-- Source code is in `src/frontend`
-- App runs on http://localhost:3000
-- To run commands in the Next.js container:
+
+- Next.js files are mounted at `/app` in the container
+- Install new dependencies:
 ```bash
-docker exec -it nextjs_app sh
+docker-compose exec frontend npm install <package-name>
 ```
+- Access frontend logs:
+```bash
+docker-compose logs -f frontend
+```
+
+### Database
+
+- Connect to PostgreSQL:
+```bash
+docker-compose exec db psql -U postgres -d myapp
+```
+- Create database backup:
+```bash
+docker-compose exec db pg_dump -U postgres myapp > backup.sql
+```
+
+## Common Commands
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Stop all services
+docker-compose down
+
+# View logs
+docker-compose logs -f [service_name]
+
+# Rebuild containers
+docker-compose up --build -d
+
+# Remove all containers and volumes
+docker-compose down -v
+```
+
+## Troubleshooting
+
+1. **Permission Issues**
+   ```bash
+   docker-compose exec backend chown -R www-data:www-data storage bootstrap/cache
+   ```
+
+2. **Database Connection Issues**
+   - Verify database credentials in `.env`
+   - Ensure database service is running:
+   ```bash
+   docker-compose ps db
+   ```
+
+3. **Cache Issues**
+   ```bash
+   docker-compose exec backend php artisan config:clear
+   docker-compose exec backend php artisan cache:clear
+   ```
+
+## Production Deployment
+
+For production deployment:
+
+1. Update environment variables:
+   - Set `APP_ENV=production`
+   - Set `APP_DEBUG=false`
+   - Use strong passwords
+   - Update APP_KEY
+
+2. Build production images:
+```bash
+docker-compose -f docker-compose.prod.yml build
+```
+
+3. Use proper SSL/TLS certificates for production.
 
 ## Contributing
 
-1. For Docker configuration changes:
-- Make changes in this repository
-- Submit PR to `vietnamtourist-docker`
+1. Create a new branch for your feature
+2. Make your changes
+3. Submit a pull request
 
-2. For Backend changes:
-- Work in `src/backend` directory
-- Submit PR to `vietnamtourist-backend`
+## License
 
-3. For Frontend changes:
-- Work in `src/frontend` directory
-- Submit PR to `vietnamtourist-frontend`
-
-## Updating Submodules
-
-To update submodules to their latest versions:
-```bash
-git submodule update --remote
+[Your License Here]
